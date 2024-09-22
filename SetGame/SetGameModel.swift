@@ -1,137 +1,79 @@
 //
 //  SetGameModel.swift
-//  SetGame
+//  SetGameTesting
 //
-//  Created by Alfredo Perry on 9/10/24.
+//  Created by Alfredo Perry on 9/19/24.
 //
 
 import Foundation
 import SwiftUI
 
 struct SetGameModel{
+
+    var score = 0
     
-    private(set) var deck: [Card]
-    private(set) var dealtCards: [Card]
-    
-    init(){
-        enum CardColor:String, CaseIterable{
-            case red = "red"
-            case green = "green"
-            case purple = "purple"
-        }
-        enum CardShape: String, CaseIterable{
-            case rectangle = "rectangle"
-            case oval = "oval"
-            case diamond = "diamond"
-        }
-        enum CardShading: String, CaseIterable{
-            case filled = "filled"
-            case outlined = "outlined"
-            case transparent = "transparent"
-        }
-        enum CardNumber: String, CaseIterable{
-            case one = "one"
-            case two = "two"
-            case three = "three"
-        }
-        
-        deck = []
-        dealtCards = []
-        var id = 0
-        for cardShape in CardShape.allCases{
-            for cardColor in CardColor.allCases{
-                for cardShading in CardShading.allCases{
-                    for cardNumber in CardNumber.allCases{
-                        let attributes = Card.Attributes(color: cardColor.rawValue, shape: cardShape.rawValue, shading: cardShading.rawValue, number: cardNumber.rawValue)
-                        deck.append(Card(id: id, Attributes: attributes))
+    private(set) var deck: [Card] = {
+        var cards = [Card]()
+        var id = 1
+        for number in Card.Number.allCases {
+            for symbol in Card.ShapeType.allCases {
+                for shading in Card.ShadingType.allCases {
+                    for color in Card.ColorType.allCases {
+                        cards.append(Card(id: id, number: number, symbol: symbol, shading: shading, color: color))
                         id += 1
                     }
                 }
             }
         }
-        deck.shuffle()
-        dealCards(cardsToDeal: 12)
-    }
+        return cards.shuffled()
+        //The () after the closing bracket executes the closure immediately so it is already initiated.
+    }()
     
-    
-    mutating func chooseCards(_ card: Card) -> Bool?{
-        let selectedCards = dealtCards.filter{$0.isChosen}
-        if let chosenIndex = dealtCards.firstIndex(where: {$0.id == card.id}){
-            dealtCards[chosenIndex].isChosen.toggle()
-            if(selectedCards.count == 3){
-                let isASet = isSet()
-                withAnimation{
-                    if(isASet){
-                        dealtCards.removeAll(where:{$0.isChosen})
-                    }
-                    else{
-                        for index in dealtCards.indices{
-                            dealtCards[index].isChosen = false
-                        }
-                    }
-                }
-                return isASet
-            }
-        }
-        //We are returning nil if there are only 3 cards selected
-        return nil
-    }
-    
-    mutating func isSet() -> Bool{
-        let selectedCards = dealtCards.filter{$0.isChosen}
-        let cardOne = selectedCards[0]
-        let cardTwo = selectedCards[1]
-        let cardThree = selectedCards[2]
+    func isSet(cards: [Card]) -> Bool {
+        guard cards.count == 3 else { return false }
+        let numbers = Set(cards.map{ $0.number})
+        let symbols = Set(cards.map{ $0.symbol})
+        let shadings = Set(cards.map({$0.shading}))
+        let colors = Set(cards.map({$0.color}))
         
-        //If all these cases are true it means that the cards in each category are either all the same or all different (which is a set)
-        if(checkIndividualAttributes(cardOne.Attributes.color, cardTwo.Attributes.color, cardThree.Attributes.color)){
-            if(checkIndividualAttributes(cardOne.Attributes.number, cardTwo.Attributes.number, cardThree.Attributes.number)){
-                if(checkIndividualAttributes(cardOne.Attributes.shading, cardTwo.Attributes.shading, cardThree.Attributes.shading)){
-                    if(checkIndividualAttributes(cardOne.Attributes.shape, cardTwo.Attributes.shape, cardThree.Attributes.shape)){
-                        return true
-                    }
+        var features = [Int]()
+        
+        features.append(numbers.count)
+        features.append(symbols.count)
+        features.append(shadings.count)
+        features.append(colors.count)
+        
+        return features.allSatisfy{$0 == 1 || $0 == 3}
+    }
+    
+    struct Card: Equatable, Identifiable {
+        enum Number: Int, CaseIterable {
+            case one = 1, two, three
+        }
+        enum ShapeType: CaseIterable {
+            case oval, rectangle, diamond
+        }
+        enum ShadingType: CaseIterable {
+            case filled, transparent, outlined
+        }
+        enum ColorType: CaseIterable {
+            case red, green, purple
+            var cardColor: Color{
+                switch self {
+                case .red:
+                    return .red
+                case .green:
+                    return .green
+                case .purple:
+                    return .purple
                 }
             }
         }
-        return false
-    }
-    
-    //This tests the cards attributes to see if they are all the same or different.
-    func checkIndividualAttributes(_ cardOne: String,_ cardTwo: String,_ cardThree: String) -> Bool{
-        let firstTest = cardOne == cardTwo
-        let secondTest = cardTwo == cardThree
-        let thirdTest = cardOne == cardThree
-        //True because all the cards are different from eachother
-        if(firstTest == false && secondTest == false && thirdTest == false){
-            return true
-        }
-        return firstTest && secondTest && thirdTest
-    }
-
-    
-    mutating func dealCards(cardsToDeal: Int){
-        for _ in 0..<cardsToDeal{
-            if let card = deck.popLast(){
-                dealtCards.append(card)
-            }
-        }
-    }
-
-    struct Card: Identifiable, CustomDebugStringConvertible{
+        var selected: Bool = false
         let id: Int
-        var isMatched: Bool = false
-        var isChosen: Bool = false
-        struct Attributes{
-            var color: String
-            var shape: String
-            var shading: String
-            var number: String
-        }
-        var Attributes: Attributes
-        var debugDescription: String {
-            return "\(id)"
-        }
-        
-
+        let number: Number
+        let symbol: ShapeType
+        let shading: ShadingType
+        let color: ColorType
     }
 }
