@@ -12,7 +12,7 @@ struct SetGameModel{
 
     var score = 0
     
-    private(set) var deck: [Card] = {
+    @State private(set) var deck: [Card] = {
         var cards = [Card]()
         var id = 1
         for number in Card.Number.allCases {

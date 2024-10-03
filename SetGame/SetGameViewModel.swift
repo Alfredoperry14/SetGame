@@ -11,13 +11,8 @@ import SwiftUI
 class SetGame: ObservableObject{
     @Published private var model = SetGame.createSetGame()
     @Published var selectedCards = [SetGameModel.Card]()
-    @Published var dealtCards: [SetGameModel.Card] = []
-    
-    var deckIndex = 80
-    
-    init(){
-        dealCards(cardsToDeal: 12)
-    }
+    //@Published var dealtCards: [SetGameModel.Card] = []
+    //@Published var discardPile: [SetGameModel.Card] = []
     
     private static func createSetGame() -> SetGameModel{
         return SetGameModel()
@@ -31,41 +26,28 @@ class SetGame: ObservableObject{
         return model.score
     }
     
-    
+
     
     //MARK: Intents
     
-    func increaseScore(increment: Int){
-        model.score += increment
-    }
     
     func newGame(){
-        model = SetGame.createSetGame()
+        model = SetGameModel()
         selectedCards.removeAll()
-        dealtCards.removeAll()
-        deckIndex = 80
-        dealCards(cardsToDeal: 12)
+        model.score = 0
     }
     
-    func removeFromDealtCards(_ card: SetGameModel.Card){
-        dealtCards.removeAll(where: { $0 == card })
+    func changeScore(increment: Int) -> Bool{
+        model.score += increment
+        return increment > 0 ? true : false
     }
-    
-    func dealCards(cardsToDeal: Int){
-        for _ in 0..<cardsToDeal {
-            if (deckIndex >= 0){
-                dealtCards.append(model.deck[deckIndex])
-                deckIndex -= 1
-            }
-        }
-    }
-    
+        
     func isSet(cards: [SetGameModel.Card]) -> Bool {
         return model.isSet(cards: cards)
     }
     
     func chooseCards(_ card: SetGameModel.Card){
-        if dealtCards.firstIndex(where: {$0.id == card.id}) != nil{
+        if deck.firstIndex(where: {$0.id == card.id}) != nil{
             if(selectedCards.contains(where: {$0.id == card.id})){
                 selectedCards.removeAll(where: { $0 == card })
             }
